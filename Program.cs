@@ -124,6 +124,52 @@ namespace PerfTestDLL
             }
         }
     }
+
+    public interface IThreadClass
+    {
+        public void StartHighThreadCount();
+    }
+
+    public class  ThreadClass : IThreadClass
+    {
+        private static readonly ManualResetEventSlim eventSlim = new ManualResetEventSlim(false);
+        private static int threadCount = 600;
+
+        public void StartHighThreadCount()
+        {
+            for (int i = 0; i < threadCount; i++)
+            {
+                Thread thread = new Thread(DoWork);
+                thread.Start(i);
+            }
+
+            // Signal the event to start all the threads.
+            eventSlim.Set();
+
+            // Keep the main thread alive until all other threads are done.
+            while (threadCount > 0)
+            {
+                Thread.Sleep(100);
+            }
+
+            eventSlim.Dispose();
+        }
+
+        public void DoWork(object data)
+        {
+            int threadNumber = (int)data;
+
+            // Wait for the event to be signaled.
+            eventSlim.Wait();
+
+            Console.WriteLine($"Thread {threadNumber} is doing some work.");
+
+            // Simulate some work.
+            Thread.Sleep(600000);
+
+            Interlocked.Decrement(ref threadCount);
+        }
+    }
 }
 
 public static class ServiceStatus
