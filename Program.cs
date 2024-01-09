@@ -66,6 +66,8 @@ namespace PerfTestDLL
             cancellationTokenSource.Cancel();
             Console.WriteLine("Cancellation token has been cancelled.");
 
+            IsRunning = false;
+
             cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         }
 
