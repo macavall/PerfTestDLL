@@ -41,14 +41,17 @@ namespace PerfTestDLL
             {
                 ServiceStatus.Running = true;
                 IsRunning = true;
-                _ = Task.Factory.StartNew(async () =>
-                {
-                    await StartHttpSender();
-                }, cancellationTokenSource.Token);
+
+                StartHttpSender();
+
+                //await Task.Factory.StartNew(() =>
+                //{
+                //    StartHttpSender();
+                //}, cancellationTokenSource.Token);
             }
         }
 
-        public async Task StartHttpSender()
+        public void StartHttpSender()
         {
             const int numThreads = 100;
 
@@ -59,7 +62,7 @@ namespace PerfTestDLL
                 tasks[i] = SendRequestsAsync(endpoint, cancellationTokenSource.Token, _httpClientFactory);
             }
 
-            await Task.WhenAll(tasks);
+            Task.WhenAll(tasks);
 
             Console.WriteLine("All threads have completed.");
         }
@@ -83,7 +86,7 @@ namespace PerfTestDLL
             {
                 using (var httpClient = clientFactory.CreateClient())
                 {
-                    while (!cancellationToken.IsCancellationRequested)
+                    while (IsRunning)
                     {
                         int retryCount = 0;
                         bool requestSuccessful = false;
@@ -192,7 +195,7 @@ public interface IServiceUpdater
 
     public Task StartSender();
 
-    public Task StartHttpSender();
+    public void StartHttpSender();
 
     public Task CancelHttpSender();
 }
