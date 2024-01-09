@@ -15,7 +15,7 @@ namespace PerfTestDLL
         private readonly ILogger logger;
         private static SemaphoreSlim semaphore = new SemaphoreSlim(30); // Limit to 30 concurrent requests
         private static string endpoint = "https://" + Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") + "/api/http2"; // "http://localhost:7151/api/http2";
-        private static int tokenWaitTime = Convert.ToInt32(Environment.GetEnvironmentVariable("tokenWaitTime"));
+        private static int tokenWaitTime = (int?)Convert.ToInt32(Environment.GetEnvironmentVariable("tokenWaitTime")) ?? 10;
         public static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(tokenWaitTime));
         private static readonly object _lock = new object();
 
