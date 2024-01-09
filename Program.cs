@@ -5,9 +5,32 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
 
 namespace PerfTestDLL
 {
+
+    public static class MemoryClass
+    {
+        public static List<byte[]> memoryLeakList = new List<byte[]>();
+
+        public static string AddMemory(int mb=100)
+        {
+            for (int i = 0; i < mb; i++)
+            {
+                // Simulate adding 1 MB of data to the list
+                byte[] data = new byte[1024 * 1024]; // 1 MB
+                memoryLeakList.Add(data);
+
+                Console.WriteLine($"Total memory allocated: {GC.GetTotalMemory(false) / (1024 * 1024)} MB");
+
+                // Sleep for a short time to slow down memory consumption for demonstration
+                System.Threading.Thread.Sleep(100);
+            }
+
+            return (GC.GetTotalMemory(false) / (1024 * 1024)).ToString();
+        }
+    }
 
     public class ServiceUpdater : IServiceUpdater
     {
@@ -37,7 +60,7 @@ namespace PerfTestDLL
         {
             await Task.Delay(1);
 
-            if(!IsRunning)
+            if(!IsRunning &&ServiceStatus.HardStatus)
             {
                 ServiceStatus.Running = true;
                 IsRunning = true;
@@ -59,7 +82,7 @@ namespace PerfTestDLL
 
             for (int i = 0; i < numThreads; i++)
             {
-                tasks[i] = SendRequestsAsync(endpoint, cancellationTokenSource.Token, _httpClientFactory);
+                tasks[i] = SendRequestsAsync(endpoint, _httpClientFactory);
             }
 
             Task.WhenAll(tasks);
@@ -70,15 +93,13 @@ namespace PerfTestDLL
         public async Task CancelHttpSender()
         {
             await Task.Delay(1);
-            cancellationTokenSource.Cancel();
             Console.WriteLine("Cancellation token has been cancelled.");
-
+            
+            ServiceStatus.Running = true;
             IsRunning = false;
-
-            cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(tokenWaitTime));
         }
 
-        public async Task SendRequestsAsync(string endpoint, CancellationToken cancellationToken, IHttpClientFactory clientFactory)
+        public async Task SendRequestsAsync(string endpoint, IHttpClientFactory clientFactory)
         {
             await semaphore.WaitAsync(); // Wait for an open slot
 
@@ -95,7 +116,7 @@ namespace PerfTestDLL
                         //{
                             try
                             {
-                                HttpResponseMessage response = await httpClient.GetAsync(endpoint, cancellationToken);
+                                HttpResponseMessage response = await httpClient.GetAsync(endpoint);
 
                                 if (response.IsSuccessStatusCode)
                                 {
@@ -187,6 +208,7 @@ namespace PerfTestDLL
 public static class ServiceStatus
 {
     public static bool Running = false;
+    public static bool HardStatus = true;
 }
 
 public interface IServiceUpdater
