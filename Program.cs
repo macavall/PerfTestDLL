@@ -32,6 +32,8 @@ namespace PerfTestDLL
 
         public async Task StartSender()
         {
+            await Task.Delay(1);
+
             _ = Task.Factory.StartNew(async () =>
             {
                 await StartHttpSender();
