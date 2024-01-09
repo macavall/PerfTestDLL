@@ -20,7 +20,7 @@ namespace PerfTestDLL
 
         public bool IsRunning { get; set; }
 
-        public ServiceUpdater( IHttpClientFactory httpClientFactory)
+        public ServiceUpdater(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
@@ -34,10 +34,14 @@ namespace PerfTestDLL
         {
             await Task.Delay(1);
 
-            _ = Task.Factory.StartNew(async () =>
+            if(!IsRunning)
             {
-                await StartHttpSender();
-            }, cancellationTokenSource.Token);
+                IsRunning = true;
+                _ = Task.Factory.StartNew(async () =>
+                {
+                    await StartHttpSender();
+                }, cancellationTokenSource.Token);
+            }
         }
 
         public async Task StartHttpSender()
@@ -174,7 +178,7 @@ namespace PerfTestDLL
 
 public static class ServiceStatus
 {
-    public static bool Running = true;
+    public static bool Running = false;
 }
 
 public interface IServiceUpdater
