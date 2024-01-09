@@ -12,7 +12,7 @@ namespace PerfTestDLL
     public class ServiceUpdater : IServiceUpdater
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger _logger;
+        private readonly ILogger logger;
         private static SemaphoreSlim semaphore = new SemaphoreSlim(30); // Limit to 30 concurrent requests
         private static string endpoint = "https://" + Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") + "/api/http2"; // "http://localhost:7151/api/http2";
         public static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(3));
@@ -23,6 +23,8 @@ namespace PerfTestDLL
         public ServiceUpdater(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+
+            Console.WriteLine($"====ENDPOINT==== --> {endpoint}");
 
             if (Environment.GetEnvironmentVariable("localrun") == "true")
             {
@@ -36,6 +38,7 @@ namespace PerfTestDLL
 
             if(!IsRunning)
             {
+                ServiceStatus.Running = true;
                 IsRunning = true;
                 _ = Task.Factory.StartNew(async () =>
                 {
@@ -84,9 +87,8 @@ namespace PerfTestDLL
                         int retryCount = 0;
                         bool requestSuccessful = false;
 
-                        while (!requestSuccessful && retryCount < 100)
-                        {
-
+                        //while (!requestSuccessful)
+                        //{
                             try
                             {
                                 HttpResponseMessage response = await httpClient.GetAsync(endpoint, cancellationToken);
@@ -113,7 +115,7 @@ namespace PerfTestDLL
                                 Console.WriteLine($"Request And Retry Failed. Thread: {Thread.CurrentThread.ManagedThreadId}, Exception: {ex.Message}");
                                 requestSuccessful = true; // Exit the loop if an exception occurs
                             }
-                        }
+                        //}
 
                         if (!ServiceStatus.Running)
                         {
