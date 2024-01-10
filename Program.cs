@@ -14,8 +14,10 @@ namespace PerfTestDLL
     {
         public static List<byte[]> memoryLeakList = new List<byte[]>();
 
-        public static string AddMemory(int mb=100)
+        public static async Task AddMemory(int mb=100, int delay=1000)
         {
+            await Task.Delay(1);
+
             for (int i = 0; i < mb; i++)
             {
                 // Simulate adding 1 MB of data to the list
@@ -25,11 +27,22 @@ namespace PerfTestDLL
                 Console.WriteLine($"Total memory allocated: {GC.GetTotalMemory(false) / (1024 * 1024)} MB");
 
                 // Sleep for a short time to slow down memory consumption for demonstration
-                System.Threading.Thread.Sleep(100);
+                Thread.Sleep(delay);
             }
+        }
 
+        public static string GetMemory()
+        {
             return (GC.GetTotalMemory(false) / (1024 * 1024)).ToString();
         }
+
+        public static string ClearMemory()
+        {
+            memoryLeakList.Clear();
+            GC.Collect();
+
+            return (GC.GetTotalMemory(false) / (1024 * 1024)).ToString();
+        }   
     }
 
     public class ServiceUpdater : IServiceUpdater
